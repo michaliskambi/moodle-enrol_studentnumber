@@ -1,21 +1,6 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
- * @package    enrol_attributes
+ * @package    enrol_studentnumber
  * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
  * @copyright  2012-2015 Université de Lausanne (@link http://www.unil.ch}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -29,7 +14,7 @@ defined('MOODLE_INTERNAL') || die();
  * @author  Petr Skoda - based on code by Martin Dougiamas, Martin Langhoff and others
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrol_attributes_plugin extends enrol_plugin {
+class enrol_studentnumber_plugin extends enrol_plugin {
     /**
      * Is it possible to delete enrol instance via standard UI?
      *
@@ -51,19 +36,19 @@ class enrol_attributes_plugin extends enrol_plugin {
     public function get_newinstance_link($courseid) {
         $context = context_course::instance($courseid);
 
-        if (!has_capability('moodle/course:enrolconfig', $context) or !has_capability('enrol/attributes:config',
+        if (!has_capability('moodle/course:enrolconfig', $context) or !has_capability('enrol/studentnumber:config',
                         $context)
         ) {
             return null;
         }
-        $configured_profilefields = explode(',', get_config('enrol_attributes', 'profilefields'));
+        $configured_profilefields = explode(',', get_config('enrol_studentnumber', 'profilefields'));
         if (!strlen(array_shift($configured_profilefields))) {
             // no profile fields are configured for this plugin
             return null;
         }
 
         // multiple instances supported - different roles with different password
-        return new moodle_url('/enrol/attributes/edit.php', array('courseid' => $courseid));
+        return new moodle_url('/enrol/studentnumber/edit.php', array('courseid' => $courseid));
     }
 
     /**
@@ -76,7 +61,7 @@ class enrol_attributes_plugin extends enrol_plugin {
     public function can_delete_instance($instance) {
         $context = context_course::instance($instance->courseid);
 
-        return has_capability('enrol/attributes:config', $context);
+        return has_capability('enrol/studentnumber:config', $context);
     }
 
     /**
@@ -89,7 +74,7 @@ class enrol_attributes_plugin extends enrol_plugin {
     public function can_hide_show_instance($instance) {
         $context = context_course::instance($instance->courseid);
 
-        return has_capability('enrol/attributes:config', $context);
+        return has_capability('enrol/studentnumber:config', $context);
     }
 
     /**
@@ -102,15 +87,15 @@ class enrol_attributes_plugin extends enrol_plugin {
     public function get_action_icons(stdClass $instance) {
         global $OUTPUT;
 
-        if ($instance->enrol !== 'attributes') {
+        if ($instance->enrol !== 'studentnumber') {
             throw new coding_exception('invalid enrol instance!');
         }
         $context = context_course::instance($instance->courseid);
 
         $icons = array();
 
-        if (has_capability('enrol/attributes:config', $context)) {
-            $editlink = new moodle_url("/enrol/attributes/edit.php", array(
+        if (has_capability('enrol/studentnumber:config', $context)) {
+            $editlink = new moodle_url("/enrol/studentnumber/edit.php", array(
                     'courseid' => $instance->courseid,
                     'id'       => $instance->id
             ));
@@ -216,14 +201,14 @@ class enrol_attributes_plugin extends enrol_plugin {
                         get_enabled_auth_plugins()) && $_SERVER['SCRIPT_FILENAME'] == $CFG->dirroot . '/auth/shibboleth/index.php'
         ) {
             // we did get this event from the Shibboleth authentication plugin,
-            // so let's try to make the relevant mappings, ensuring that necessary profile fields exist and Shibboleth attributes are provided:
+            // so let's try to make the relevant mappings, ensuring that necessary profile fields exist and Shibboleth studentnumber are provided:
             $customfieldrecords = $DB->get_records('user_info_field');
             $customfields = array();
             foreach ($customfieldrecords as $customfieldrecord) {
                 $customfields[] = $customfieldrecord->shortname;
             }
             $mapping = array();
-            $mappings_str = explode("\n", str_replace("\r", '', get_config('enrol_attributes', 'mappings')));
+            $mappings_str = explode("\n", str_replace("\r", '', get_config('enrol_studentnumber', 'mappings')));
             foreach ($mappings_str as $mapping_str) {
                 if (preg_match('/^\s*([^: ]+)\s*:\s*([^: ]+)\s*$/', $mapping_str, $matches) && in_array($matches[2],
                                 $customfields) && array_key_exists($matches[1], $_SERVER)
@@ -255,8 +240,8 @@ class enrol_attributes_plugin extends enrol_plugin {
 
         if ($instanceid) {
             // We're processing one particular instance, making sure it's active
-            $enrol_attributes_records = $DB->get_records('enrol', array(
-                    'enrol'  => 'attributes',
+            $enrol_studentnumber_records = $DB->get_records('enrol', array(
+                    'enrol'  => 'studentnumber',
                     'status' => 0,
                     'id'     => $instanceid
             ));
@@ -265,15 +250,15 @@ class enrol_attributes_plugin extends enrol_plugin {
             // We're processing all active instances,
             // because a user just logged in
             // OR we're running the cron
-            $enrol_attributes_records = $DB->get_records('enrol', array(
-                    'enrol'  => 'attributes',
+            $enrol_studentnumber_records = $DB->get_records('enrol', array(
+                    'enrol'  => 'studentnumber',
                     'status' => 0
             ));
             if (!is_null($event)) {
                 // Let's check if there are any potential unenroling instances
                 $userid = (int)$event->userid;
                 $possible_unenrolments =
-                        $DB->get_records_sql("SELECT id, enrolid FROM {user_enrolments} WHERE userid = ? AND status = 0 AND enrolid IN ( SELECT id FROM {enrol} WHERE enrol = 'attributes' AND customint1 = 1 ) ",
+                        $DB->get_records_sql("SELECT id, enrolid FROM {user_enrolments} WHERE userid = ? AND status = 0 AND enrolid IN ( SELECT id FROM {enrol} WHERE enrol = 'studentnumber' AND customint1 = 1 ) ",
                                 array($userid));
             }
         }
@@ -281,34 +266,34 @@ class enrol_attributes_plugin extends enrol_plugin {
         // are we to unenrol from anywhere?
         foreach ($possible_unenrolments as $id => $user_enrolment) {
 
-            $unenrol_attributes_record = $DB->get_record('enrol', array(
-                    'enrol'      => 'attributes',
+            $unenrol_studentnumber_record = $DB->get_record('enrol', array(
+                    'enrol'      => 'studentnumber',
                     'status'     => 0,
                     'customint1' => 1,
                     'id'         => $user_enrolment->enrolid
             ));
-            if (!$unenrol_attributes_record) {
+            if (!$unenrol_studentnumber_record) {
                 continue;
             }
 
             $select = 'SELECT DISTINCT u.id FROM {user} u';
             $where = ' WHERE u.id=' . $userid . ' AND u.deleted=0 AND ';
-            $arraysyntax = self::attrsyntax_toarray($unenrol_attributes_record->customtext1);
+            $arraysyntax = self::attrsyntax_toarray($unenrol_studentnumber_record->customtext1);
             $arraysql = self::arraysyntax_tosql($arraysyntax);
             $users = $DB->get_records_sql($select . $arraysql['select'] . $where . $arraysql['where'],
                     $arraysql['params']);
 
             if (!array_key_exists($userid, $users)) {
-                $enrol_attributes_instance = new enrol_attributes_plugin();
-                $enrol_attributes_instance->unenrol_user($unenrol_attributes_record, (int)$userid);
+                $enrol_studentnumber_instance = new enrol_studentnumber_plugin();
+                $enrol_studentnumber_instance->unenrol_user($unenrol_studentnumber_record, (int)$userid);
             }
         }
 
         // are we to enrol anywhere?
-        foreach ($enrol_attributes_records as $enrol_attributes_record) {
+        foreach ($enrol_studentnumber_records as $enrol_studentnumber_record) {
 
-            $rules = json_decode($enrol_attributes_record->customtext1)->rules;
-            $configured_profilefields = explode(',', get_config('enrol_attributes', 'profilefields'));
+            $rules = json_decode($enrol_studentnumber_record->customtext1)->rules;
+            $configured_profilefields = explode(',', get_config('enrol_studentnumber', 'profilefields'));
             foreach ($rules as $rule) {
                 if (!isset($rule->param)) {
                     break;
@@ -317,8 +302,8 @@ class enrol_attributes_plugin extends enrol_plugin {
                     break 2;
                 }
             }
-            $enrol_attributes_instance = new enrol_attributes_plugin();
-            $enrol_attributes_instance->name = $enrol_attributes_record->name;
+            $enrol_studentnumber_instance = new enrol_studentnumber_plugin();
+            $enrol_studentnumber_instance->name = $enrol_studentnumber_record->name;
 
             $select = 'SELECT DISTINCT u.id FROM {user} u';
             if ($event) { // called by an event, i.e. user login
@@ -329,24 +314,24 @@ class enrol_attributes_plugin extends enrol_plugin {
                 $where = ' WHERE 1=1';
             }
             $where .= ' AND u.deleted=0 AND ';
-            $arraysyntax = self::attrsyntax_toarray($enrol_attributes_record->customtext1);
+            $arraysyntax = self::attrsyntax_toarray($enrol_studentnumber_record->customtext1);
             $arraysql = self::arraysyntax_tosql($arraysyntax);
 
             $users = $DB->get_records_sql($select . $arraysql['select'] . $where . $arraysql['where'],
                     $arraysql['params']);
             foreach ($users as $user) {
-                if (is_enrolled(context_course::instance($enrol_attributes_record->courseid), $user)) {
+                if (is_enrolled(context_course::instance($enrol_studentnumber_record->courseid), $user)) {
                     continue;
                 }
-                $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
-                        $enrol_attributes_record->roleid);
+                $enrol_studentnumber_instance->enrol_user($enrol_studentnumber_record, $user->id,
+                        $enrol_studentnumber_record->roleid);
                 $nbenrolled++;
             }
         }
 
         if (!$event && !$instanceid) {
             // we only want output if runnning within the cron
-            mtrace('enrol_attributes : enrolled ' . $nbenrolled . ' users.');
+            mtrace('enrol_studentnumber : enrolled ' . $nbenrolled . ' users.');
         }
 
         return $nbenrolled;
@@ -361,7 +346,7 @@ class enrol_attributes_plugin extends enrol_plugin {
         }
         global $DB;
         if (!$DB->delete_records('role_assignments', array(
-                'component' => 'enrol_attributes',
+                'component' => 'enrol_studentnumber',
                 'itemid'    => $instanceid
         ))
         ) {
@@ -386,13 +371,13 @@ class enrol_attributes_plugin extends enrol_plugin {
      * @return moodle_url;
      */
     public function add_course_navigation($instancesnode, stdClass $instance) {
-        if ($instance->enrol !== 'attributes') {
+        if ($instance->enrol !== 'studentnumber') {
             throw new coding_exception('Invalid enrol instance type!');
         }
 
         $context = context_course::instance($instance->courseid);
-        if (has_capability('enrol/attributes:config', $context)) {
-            $managelink = new moodle_url('/enrol/attributes/edit.php', array(
+        if (has_capability('enrol/studentnumber:config', $context)) {
+            $managelink = new moodle_url('/enrol/studentnumber/edit.php', array(
                     'courseid' => $instance->courseid,
                     'id'       => $instance->id
             ));

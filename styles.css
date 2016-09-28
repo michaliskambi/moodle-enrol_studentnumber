@@ -102,15 +102,15 @@
 }
 
 .boolean-editor .button-pannel .button-add-cond {
-    background-image: url([[pix:enrol_attributes|add]]);
+    background-image: url([[pix:enrol_studentnumber|add]]);
 }
 
 .boolean-editor .button-pannel .button-add-group {
-    background-image: url([[pix:enrol_attributes|group_add]]);
+    background-image: url([[pix:enrol_studentnumber|group_add]]);
 }
 
 .boolean-editor .button-pannel .button-del-cond {
-    background-image: url([[pix:enrol_attributes|delete]]);
+    background-image: url([[pix:enrol_studentnumber|delete]]);
 }
 
 #shib-expression .expr {

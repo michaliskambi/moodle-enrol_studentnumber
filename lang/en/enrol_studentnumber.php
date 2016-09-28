@@ -15,6 +15,6 @@ $string['studentnumber:config'] = 'Configure plugin instances';
 $string['studentnumber:manage'] = 'Manage enrolled users';
 $string['studentnumber:unenrol'] = 'Unenrol users from the course';
 $string['studentnumber:unenrolself'] = 'Unenrol self from the course';
-$string['removewhenexpired'] = 'Unenrol after attributes expiration';
-$string['removewhenexpired_help'] = 'Unenrol users upon login if they don\'t match the attribute rule anymore.';
+$string['removewhenexpired'] = 'Unenrol after user no longer qualifies';
+$string['removewhenexpired_help'] = 'Unenrol users upon login if they don\'t match the rule anymore.';
 

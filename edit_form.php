@@ -45,6 +45,8 @@ class enrol_studentnumber_edit_form extends moodleform {
         $mform->addElement('hidden', 'courseid');
         $mform->setType('courseid', PARAM_INT);
 
+        $this->add_action_buttons();
+
         $this->set_data($instance);
     }
 }

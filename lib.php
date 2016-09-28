@@ -1,9 +1,11 @@
 <?php
 /**
  * @package    enrol_studentnumber
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>,  Michalis Kamburelis
  * @copyright  2012-2015 Université de Lausanne (@link http://www.unil.ch}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * See https://docs.moodle.org/dev/Enrolment_plugins
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -11,7 +13,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Database enrolment plugin implementation.
  *
- * @author  Petr Skoda - based on code by Martin Dougiamas, Martin Langhoff and others
+ * @author  Michalis Kamburelis, Petr Skoda - based on code by Martin Dougiamas, Martin Langhoff and others
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class enrol_studentnumber_plugin extends enrol_plugin {
@@ -101,64 +103,49 @@ class enrol_studentnumber_plugin extends enrol_plugin {
         return $icons;
     }
 
-    public static function studentnumbers_tosql($text) { // TODO : protected
-        global $CFG;
+    public static function studentnumbers_tolist($text)
+    {
+        $result = array();
+
+        // Based on https://evertpot.com/222/
+        $stream = fopen('php://memory','r+');
+        fwrite($stream, $text);
+        rewind($stream);
+
+        if (strstr($text, ',') !== FALSE) {
+            /* read CSV */
+            while (($data = fgetcsv($stream, 0, ",")) !== FALSE)  {
+                if ($data === NULL) { // empty line
+                    continue;
+                }
+                if (count($data) != 4) {
+                    print_error('Błędny plik CSV, linia nie ma dokładnie 4 kolumn: ' . print_r($data, true));
+                }
+                $result[] = trim($data[2]);
+            }
+        } else {
+            /* read one studentnumber per line */
+            while ($line = fgets($stream)) {
+                $line = trim($line);
+                if ($line != '') {
+                    $result[] = $line;
+                }
+            }
+        }
+        fclose($stream);
+
+        return $result;
+    }
+
+    public static function studentnumbers_tosql($text) {
+        global $CFG, $DB;
         $select = '';
-        $where = '1=1';
-        // static $join_id = 0;
+        $where = '(1=0)';
         $params = array();
-
-        /* TODO - enrol_studentnumber */
-        /* $customuserfields = $arraysyntax['customuserfields']; */
-
-        /* foreach ($arraysyntax['rules'] as $rule) { */
-        /*     // first just check if we have a value 'ANY' to enroll all people : */
-        /*     if (isset($rule->value) && $rule->value == 'ANY') { */
-        /*         return array( */
-        /*                 'select' => '', */
-        /*                 'where'  => '1=1', */
-        /*                 'params' => $params */
-        /*         ); */
-        /*     } */
-        /* } */
-
-        /* foreach ($arraysyntax['rules'] as $rule) { */
-        /*     if (isset($rule->cond_op)) { */
-        /*         $where .= ' ' . strtoupper($rule->cond_op) . ' '; */
-        /*     } */
-        /*     else { */
-        /*         $where .= ' AND '; */
-        /*     } */
-        /*     if (isset($rule->rules)) { */
-        /*         $sub_arraysyntax = array( */
-        /*                 'customuserfields' => $customuserfields, */
-        /*                 'rules'            => $rule->rules */
-        /*         ); */
-        /*         $sub_sql = self::arraysyntax_tosql($sub_arraysyntax); */
-        /*         $select .= ' ' . $sub_sql['select'] . ' '; */
-        /*         $where .= ' ( ' . $sub_sql['where'] . ' ) '; */
-        /*         $params = array_merge($params, $sub_sql['params']); */
-        /*     } */
-        /*     else { */
-        /*         if ($customkey = array_search($rule->param, $customuserfields, true)) { */
-        /*             // custom user field actually exists */
-        /*             $join_id++; */
-        /*             global $DB; */
-        /*             $data = 'd' . $join_id . '.data'; */
-        /*             $select .= ' RIGHT JOIN {user_info_data} d' . $join_id . ' ON d' . $join_id . '.userid = u.id'; */
-        /*             $where .= ' (d' . $join_id . '.fieldid = ? AND (' . $DB->sql_compare_text($data) . ' = ' . $DB->sql_compare_text('?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), */
-        /*                             '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), */
-        /*                             '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), '?') . '))'; */
-        /*             array_push($params, $customkey, $rule->value, '%;' . $rule->value, $rule->value . ';%', */
-        /*                     '%;' . $rule->value . ';%'); */
-        /*         } */
-        /*     } */
-        /* } */
-
-        /* $where = preg_replace('/^1=1 AND/', '', $where); */
-        /* $where = preg_replace('/^1=1 OR/', '', $where); */
-        /* $where = preg_replace('/^1=1/', '', $where); */
-
+        foreach (self::studentnumbers_tolist($text) as $studentnumber) {
+            $where .= ' or (u.username =  ?)';
+            $params[] = $studentnumber;
+        }
         return array(
                 'select' => $select,
                 'where'  => $where,

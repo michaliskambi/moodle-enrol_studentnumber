@@ -87,4 +87,26 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'enrol_studentnumber'));
 $mform->display();
 
+// DEBUGGING
+/*
+if ($instanceid) {
+    echo '<h2>Debug</h2>';
+    echo '<hr>customtext1<br>';
+    print_r($instance->customtext1);
+    echo '<hr>studentnumbers_tolist count<br>';
+    print_r(count(enrol_studentnumber_plugin::studentnumbers_tolist($instance->customtext1)));
+    echo '<hr>studentnumbers_tolist<br>';
+    print_r(enrol_studentnumber_plugin::studentnumbers_tolist($instance->customtext1));
+    echo '<hr>studentnumbers_tosql<br>';
+    $debug_arraysql = enrol_studentnumber_plugin::studentnumbers_tosql($instance->customtext1);
+    print_r($debug_arraysql);
+    echo '<hr>sql<br>';
+    $debug_sqlquery =  'SELECT DISTINCT u.id FROM {user} u ' . $debug_arraysql['select'] . ' WHERE ' . $debug_arraysql['where'];
+    echo $debug_sqlquery;
+    echo '<hr>users count<br>';
+    $debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
+    echo count($debug_users);
+}
+*/
+
 echo $OUTPUT->footer();

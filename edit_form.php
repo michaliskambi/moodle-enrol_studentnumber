@@ -35,7 +35,6 @@ class enrol_studentnumber_edit_form extends moodleform {
                 'cols' => '60',
                 'rows' => '8'
         ));
-        $mform->addHelpButton('customtext1', 'studentnumbers', 'enrol_studentnumber');
 
         $mform->addElement('checkbox', 'customint1', get_string('removewhenexpired', 'enrol_studentnumber'));
         $mform->addHelpButton('customint1', 'removewhenexpired', 'enrol_studentnumber');

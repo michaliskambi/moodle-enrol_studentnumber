@@ -109,4 +109,10 @@ if ($instanceid) {
 }
 */
 
+$debug_count_all = count(enrol_studentnumber_plugin::studentnumbers_tolist($instance->customtext1));
+$debug_arraysql = enrol_studentnumber_plugin::studentnumbers_tosql($instance->customtext1);
+$debug_sqlquery = 'SELECT DISTINCT u.id FROM {user} u ' . $debug_arraysql['select'] . ' WHERE ' . $debug_arraysql['where'];
+$debug_count_existing = count($DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']));
+echo '<p>Dane z ostatniego zapisu ustawień: ' . $debug_count_all . ' numerów indeksów, z tego ' . $debug_count_existing . ' już ma konto w Moodle.</p>';
+
 echo $OUTPUT->footer();

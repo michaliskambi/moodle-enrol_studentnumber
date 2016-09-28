@@ -41,11 +41,6 @@ class enrol_studentnumber_plugin extends enrol_plugin {
         ) {
             return null;
         }
-        $configured_profilefields = explode(',', get_config('enrol_studentnumber', 'profilefields'));
-        if (!strlen(array_shift($configured_profilefields))) {
-            // no profile fields are configured for this plugin
-            return null;
-        }
 
         // multiple instances supported - different roles with different password
         return new moodle_url('/enrol/studentnumber/edit.php', array('courseid' => $courseid));
@@ -106,78 +101,63 @@ class enrol_studentnumber_plugin extends enrol_plugin {
         return $icons;
     }
 
-    public static function attrsyntax_toarray($attrsyntax) { // TODO : protected
-        global $DB;
-
-        $attrsyntax_object = json_decode($attrsyntax);
-        $rules = $attrsyntax_object->rules;
-
-        $customuserfields = array();
-        foreach ($DB->get_records('user_info_field') as $customfieldrecord) {
-            $customuserfields[$customfieldrecord->id] = $customfieldrecord->shortname;
-        }
-
-        return array(
-                'customuserfields' => $customuserfields,
-                'rules'            => $rules
-        );
-    }
-
-    public static function arraysyntax_tosql($arraysyntax) { // TODO : protected
+    public static function studentnumbers_tosql($text) { // TODO : protected
         global $CFG;
         $select = '';
         $where = '1=1';
-        static $join_id = 0;
+        // static $join_id = 0;
         $params = array();
-        $customuserfields = $arraysyntax['customuserfields'];
 
-        foreach ($arraysyntax['rules'] as $rule) {
-            // first just check if we have a value 'ANY' to enroll all people :
-            if (isset($rule->value) && $rule->value == 'ANY') {
-                return array(
-                        'select' => '',
-                        'where'  => '1=1',
-                        'params' => $params
-                );
-            }
-        }
+        /* TODO - enrol_studentnumber */
+        /* $customuserfields = $arraysyntax['customuserfields']; */
 
-        foreach ($arraysyntax['rules'] as $rule) {
-            if (isset($rule->cond_op)) {
-                $where .= ' ' . strtoupper($rule->cond_op) . ' ';
-            }
-            else {
-                $where .= ' AND ';
-            }
-            if (isset($rule->rules)) {
-                $sub_arraysyntax = array(
-                        'customuserfields' => $customuserfields,
-                        'rules'            => $rule->rules
-                );
-                $sub_sql = self::arraysyntax_tosql($sub_arraysyntax);
-                $select .= ' ' . $sub_sql['select'] . ' ';
-                $where .= ' ( ' . $sub_sql['where'] . ' ) ';
-                $params = array_merge($params, $sub_sql['params']);
-            }
-            else {
-                if ($customkey = array_search($rule->param, $customuserfields, true)) {
-                    // custom user field actually exists
-                    $join_id++;
-                    global $DB;
-                    $data = 'd' . $join_id . '.data';
-                    $select .= ' RIGHT JOIN {user_info_data} d' . $join_id . ' ON d' . $join_id . '.userid = u.id';
-                    $where .= ' (d' . $join_id . '.fieldid = ? AND (' . $DB->sql_compare_text($data) . ' = ' . $DB->sql_compare_text('?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
-                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
-                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), '?') . '))';
-                    array_push($params, $customkey, $rule->value, '%;' . $rule->value, $rule->value . ';%',
-                            '%;' . $rule->value . ';%');
-                }
-            }
-        }
+        /* foreach ($arraysyntax['rules'] as $rule) { */
+        /*     // first just check if we have a value 'ANY' to enroll all people : */
+        /*     if (isset($rule->value) && $rule->value == 'ANY') { */
+        /*         return array( */
+        /*                 'select' => '', */
+        /*                 'where'  => '1=1', */
+        /*                 'params' => $params */
+        /*         ); */
+        /*     } */
+        /* } */
 
-        $where = preg_replace('/^1=1 AND/', '', $where);
-        $where = preg_replace('/^1=1 OR/', '', $where);
-        $where = preg_replace('/^1=1/', '', $where);
+        /* foreach ($arraysyntax['rules'] as $rule) { */
+        /*     if (isset($rule->cond_op)) { */
+        /*         $where .= ' ' . strtoupper($rule->cond_op) . ' '; */
+        /*     } */
+        /*     else { */
+        /*         $where .= ' AND '; */
+        /*     } */
+        /*     if (isset($rule->rules)) { */
+        /*         $sub_arraysyntax = array( */
+        /*                 'customuserfields' => $customuserfields, */
+        /*                 'rules'            => $rule->rules */
+        /*         ); */
+        /*         $sub_sql = self::arraysyntax_tosql($sub_arraysyntax); */
+        /*         $select .= ' ' . $sub_sql['select'] . ' '; */
+        /*         $where .= ' ( ' . $sub_sql['where'] . ' ) '; */
+        /*         $params = array_merge($params, $sub_sql['params']); */
+        /*     } */
+        /*     else { */
+        /*         if ($customkey = array_search($rule->param, $customuserfields, true)) { */
+        /*             // custom user field actually exists */
+        /*             $join_id++; */
+        /*             global $DB; */
+        /*             $data = 'd' . $join_id . '.data'; */
+        /*             $select .= ' RIGHT JOIN {user_info_data} d' . $join_id . ' ON d' . $join_id . '.userid = u.id'; */
+        /*             $where .= ' (d' . $join_id . '.fieldid = ? AND (' . $DB->sql_compare_text($data) . ' = ' . $DB->sql_compare_text('?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), */
+        /*                             '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), */
+        /*                             '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), '?') . '))'; */
+        /*             array_push($params, $customkey, $rule->value, '%;' . $rule->value, $rule->value . ';%', */
+        /*                     '%;' . $rule->value . ';%'); */
+        /*         } */
+        /*     } */
+        /* } */
+
+        /* $where = preg_replace('/^1=1 AND/', '', $where); */
+        /* $where = preg_replace('/^1=1 OR/', '', $where); */
+        /* $where = preg_replace('/^1=1/', '', $where); */
 
         return array(
                 'select' => $select,
@@ -197,39 +177,7 @@ class enrol_studentnumber_plugin extends enrol_plugin {
             // didn't get an user ID, return as there is nothing we can do
             return true;
         }
-        if (in_array('shibboleth',
-                        get_enabled_auth_plugins()) && $_SERVER['SCRIPT_FILENAME'] == $CFG->dirroot . '/auth/shibboleth/index.php'
-        ) {
-            // we did get this event from the Shibboleth authentication plugin,
-            // so let's try to make the relevant mappings, ensuring that necessary profile fields exist and Shibboleth studentnumber are provided:
-            $customfieldrecords = $DB->get_records('user_info_field');
-            $customfields = array();
-            foreach ($customfieldrecords as $customfieldrecord) {
-                $customfields[] = $customfieldrecord->shortname;
-            }
-            $mapping = array();
-            $mappings_str = explode("\n", str_replace("\r", '', get_config('enrol_studentnumber', 'mappings')));
-            foreach ($mappings_str as $mapping_str) {
-                if (preg_match('/^\s*([^: ]+)\s*:\s*([^: ]+)\s*$/', $mapping_str, $matches) && in_array($matches[2],
-                                $customfields) && array_key_exists($matches[1], $_SERVER)
-                ) {
-                    $mapping[$matches[1]] = $matches[2];
-                }
-            }
-            if (count($mapping)) {
-                // now update user profile data from Shibboleth params received as part of the event:
-                $user = $DB->get_record('user', ['id' => $event->userid], '*', MUST_EXIST);
-                foreach ($mapping as $shibattr => $fieldname) {
-                    if (isset($_SERVER[$shibattr])) {
-                        $propertyname = 'profile_field_' . $fieldname;
-                        $user->$propertyname = $_SERVER[$shibattr];
-                    }
-                }
-                require_once($CFG->dirroot . '/user/profile/lib.php');
-                profile_save_data($user);
-            }
-        }
-        // last, process the actual enrolments, whether we're using Shibboleth authentication or not:
+        // process the actual enrolments
         self::process_enrolments($event);
     }
 
@@ -278,8 +226,7 @@ class enrol_studentnumber_plugin extends enrol_plugin {
 
             $select = 'SELECT DISTINCT u.id FROM {user} u';
             $where = ' WHERE u.id=' . $userid . ' AND u.deleted=0 AND ';
-            $arraysyntax = self::attrsyntax_toarray($unenrol_studentnumber_record->customtext1);
-            $arraysql = self::arraysyntax_tosql($arraysyntax);
+            $arraysql = self::studentnumbers_tosql($unenrol_studentnumber_record->customtext1);
             $users = $DB->get_records_sql($select . $arraysql['select'] . $where . $arraysql['where'],
                     $arraysql['params']);
 
@@ -292,16 +239,6 @@ class enrol_studentnumber_plugin extends enrol_plugin {
         // are we to enrol anywhere?
         foreach ($enrol_studentnumber_records as $enrol_studentnumber_record) {
 
-            $rules = json_decode($enrol_studentnumber_record->customtext1)->rules;
-            $configured_profilefields = explode(',', get_config('enrol_studentnumber', 'profilefields'));
-            foreach ($rules as $rule) {
-                if (!isset($rule->param)) {
-                    break;
-                }
-                if (!in_array($rule->param, $configured_profilefields)) {
-                    break 2;
-                }
-            }
             $enrol_studentnumber_instance = new enrol_studentnumber_plugin();
             $enrol_studentnumber_instance->name = $enrol_studentnumber_record->name;
 
@@ -314,8 +251,7 @@ class enrol_studentnumber_plugin extends enrol_plugin {
                 $where = ' WHERE 1=1';
             }
             $where .= ' AND u.deleted=0 AND ';
-            $arraysyntax = self::attrsyntax_toarray($enrol_studentnumber_record->customtext1);
-            $arraysql = self::arraysyntax_tosql($arraysyntax);
+            $arraysql = self::studentnumbers_tosql($enrol_studentnumber_record->customtext1);
 
             $users = $DB->get_records_sql($select . $arraysql['select'] . $where . $arraysql['where'],
                     $arraysql['params']);
@@ -386,4 +322,3 @@ class enrol_studentnumber_plugin extends enrol_plugin {
     }
 
 }
-

@@ -31,11 +31,11 @@ class enrol_studentnumber_edit_form extends moodleform {
         $mform->addElement('select', 'roleid', get_string('role'), $roles);
         $mform->setDefault('roleid', $plugin->get_config('default_roleid'));
 
-        $mform->addElement('textarea', 'customtext1', get_string('attrsyntax', 'enrol_studentnumber'), array(
+        $mform->addElement('textarea', 'customtext1', get_string('studentnumbers', 'enrol_studentnumber'), array(
                 'cols' => '60',
                 'rows' => '8'
         ));
-        $mform->addHelpButton('customtext1', 'attrsyntax', 'enrol_studentnumber');
+        $mform->addHelpButton('customtext1', 'studentnumbers', 'enrol_studentnumber');
 
         $mform->addElement('checkbox', 'customint1', get_string('removewhenexpired', 'enrol_studentnumber'));
         $mform->addHelpButton('customint1', 'removewhenexpired', 'enrol_studentnumber');

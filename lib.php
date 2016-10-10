@@ -146,6 +146,8 @@ class enrol_studentnumber_plugin extends enrol_plugin {
             $where .= ' or (u.username =  ?)';
             $params[] = $studentnumber;
         }
+        // make sure it plays nicely if outside code uses: $where." and something"
+        $where = ' ( ' .  $where . ' ) ';
         return array(
                 'select' => $select,
                 'where'  => $where,

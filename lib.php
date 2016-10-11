@@ -170,7 +170,64 @@ class enrol_studentnumber_plugin extends enrol_plugin {
         self::process_enrolments($event);
     }
 
-    public static function process_enrolments($event = null, $instanceid = null) {
+    public static function process_all_enrolments_and_unenrolments($instanceid, &$nbenrolled, &$nbunenrolled)
+    {
+        global $DB;
+
+        /* process all enrolments */
+        self::process_enrolments_core(null, $instanceid, $nbenrolled);
+
+        /* process all unenrolments */
+        $nbunenrolled = 0;
+
+        $enrolled_currently =
+            $DB->get_records_sql("SELECT ue.id, ue.userid, ue.enrolid FROM {user_enrolments} ue " .
+                "JOIN {enrol} e ON (ue.enrolid = e.id) " .
+                "WHERE (e.id = ?) AND (e.enrol = 'studentnumber') AND (e.customint1 = 1)",
+                array($instanceid));
+        // print_r($enrolled_currently);
+        if (!$enrolled_currently) {
+            return;
+        }
+
+        $instance_info = $DB->get_record('enrol', array(
+            'enrol'      => 'studentnumber',
+            'status'     => 0,
+            'customint1' => 1,
+            'id'         => $instanceid
+        ));
+        // print_r($instance_info);
+        if (!$instance_info) {
+            return;
+        }
+
+        $arraysql = self::studentnumbers_tosql($instance_info->customtext1);
+        $enrolled_should_be =
+            $DB->get_records_sql(
+                'SELECT DISTINCT u.id FROM {user} u ' . $arraysql['select'] .
+                ' WHERE u.deleted=0 AND ' . $arraysql['where'],
+                $arraysql['params']);
+        // print_r($enrolled_should_be);
+
+        foreach ($enrolled_currently as $enrolment_record) {
+            $enrolled_userid = (int)$enrolment_record->userid;
+            if (!array_key_exists($enrolled_userid, $enrolled_should_be)) {
+                $enrol_studentnumber_instance = new enrol_studentnumber_plugin();
+                $enrol_studentnumber_instance->unenrol_user($instance_info, $enrolled_userid);
+                $nbunenrolled++;
+            }
+        }
+    }
+
+    public static function process_enrolments($event = null, $instanceid = null)
+    {
+        $nbenrolled = 0;
+        self::process_enrolments_core($event, $instanceid, $nbenrolled);
+        // ignore $nbenrolled
+    }
+
+    public static function process_enrolments_core($event, $instanceid, &$nbenrolled)
+    {
         global $DB;
         $nbenrolled = 0;
         $possible_unenrolments = array();
@@ -249,7 +306,7 @@ class enrol_studentnumber_plugin extends enrol_plugin {
                     continue;
                 }
                 $enrol_studentnumber_instance->enrol_user($enrol_studentnumber_record, $user->id,
-                        $enrol_studentnumber_record->roleid);
+                    $enrol_studentnumber_record->roleid);
                 $nbenrolled++;
             }
         }

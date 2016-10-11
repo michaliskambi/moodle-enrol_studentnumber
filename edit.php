@@ -53,6 +53,9 @@ $mform = new enrol_studentnumber_edit_form(null, array(
         $context
 ));
 
+$nbenrolled = 0;
+$nbunenrolled = 0;
+
 if ($mform->is_cancelled()) {
     redirect($return);
 }
@@ -75,7 +78,13 @@ else if ($data = $mform->get_data()) {
         $plugin->add_instance($course, $fields);
     }
 
-    redirect($return);
+    // redirect($return);
+    // do not redirect, stay on this page to show process_all_enrolments_and_unenrolments results
+
+    if ($instance->id) {
+        enrol_studentnumber_plugin::process_all_enrolments_and_unenrolments(
+            $instance->id, $nbenrolled, $nbunenrolled);
+    }
 }
 
 $PAGE->set_heading($course->fullname);
@@ -85,6 +94,11 @@ $PAGE->set_title(get_string('pluginname', 'enrol_studentnumber'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'enrol_studentnumber'));
+
+if ($nbenrolled != 0 || $nbunenrolled != 0) {
+    echo '<p class="alert alert-info">Stan zapisów uległ zmianie. Zapisano: ' . $nbenrolled . ', wypisano: ' . $nbunenrolled . '</p>';
+}
+
 $mform->display();
 
 // DEBUGGING
